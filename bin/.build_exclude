@@ -1,0 +1,15 @@
+.git
+.github
+.gitignore
+build
+build.sh
+tests
+.release_exclude
+.DS_Store
+vendor
+src/Resources/node_modules
+.php_cs
+.php_cs.dist
+phpstan.neon
+bin
+rector.php
