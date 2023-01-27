@@ -6,7 +6,6 @@ namespace Ratepay\RpayPaymentsHeadless\Components\Checkout\Controller;
 use Ratepay\RpayPayments\Components\Checkout\Service\ExtensionService;
 use Ratepay\RpayPayments\Components\CreditworthinessPreCheck\Service\PaymentQueryValidatorService;
 use Ratepay\RpayPayments\Components\ProfileConfig\Exception\ProfileNotFoundException;
-use Ratepay\RpayPayments\Components\ProfileConfig\Model\ProfileConfigEntity;
 use Ratepay\RpayPayments\Components\ProfileConfig\Service\Search\ProfileBySalesChannelContextAndCart;
 use Ratepay\RpayPayments\Components\RatepayApi\Service\TransactionIdService;
 use Ratepay\RpayPayments\Exception\RatepayException;
@@ -14,7 +13,7 @@ use Ratepay\RpayPaymentsHeadless\Components\Checkout\Struct\PaymentDataResponse;
 use Ratepay\RpayPaymentsHeadless\Components\Checkout\Struct\PaymentQueryValidationResult;
 use Shopware\Core\Checkout\Cart\SalesChannel\CartService;
 use Shopware\Core\Framework\Plugin\Exception\DecorationPatternException;
-use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
+use Shopware\Core\Framework\Validation\DataBag\DataBag;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Storefront\Page\Account\Order\AccountEditOrderPageLoader;
 use Symfony\Component\HttpFoundation\Request;
@@ -72,11 +71,9 @@ class CheckoutController extends AbstractCheckoutController
 
             $transactionId = $this->transactionIdService->getTransactionId($salesChannelContext, TransactionIdService::PREFIX_CART, $profileConfig);
 
-            $this->paymentQueryValidatorService->validate($cart, $salesChannelContext, $transactionId, new RequestDataBag([
-                'ratepay' => [
-                    'profile_uuid' => $profileConfig->getId()
-                ]
-            ]));
+            $dataBag = new DataBag(['ratepay' => $request->request->all()]);
+            $dataBag->get('ratepay')->set('profile_uuid', $profileConfig->getId());
+            $this->paymentQueryValidatorService->validate($cart, $salesChannelContext, $transactionId, $dataBag);
 
             return PaymentQueryValidationResult::createSuccess($transactionId);
         } catch (RatepayException $ratepayException) {
