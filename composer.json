@@ -1,0 +1,34 @@
+{
+    "name": "ratepay/shopware6-headless-support-module",
+    "version": "0.0.1-alpha1",
+    "type": "shopware-platform-plugin",
+    "autoload": {
+        "psr-4": {
+            "Ratepay\\RpayPaymentsHeadless\\": "src/"
+        }
+    },
+    "extra": {
+        "shopware-plugin-class": "Ratepay\\RpayPaymentsHeadless\\RpayPaymentsHeadless",
+        "copyright": "(c) by Ratepay GmbH",
+        "plugin-icon": "src/Resources/public/plugin.png",
+        "label": {
+            "de-DE": "Ratepay Headless Support Module",
+            "en-GB": "Ratepay Headless Support Module"
+        },
+        "description": {
+            "de-DE": "Ratepay Headless Support Module",
+            "en-GB": "Ratepay Headless Support Module"
+        },
+        "manufacturerLink": {
+            "de-DE": "https://www.ratepay.com",
+            "en-GB": "https://www.ratepay.com"
+        },
+        "supportLink": {
+            "de-DE": "https://ratepay.gitbook.io/shopware6/",
+            "en-GB": "https://ratepay.gitbook.io/shopware6/"
+        }
+    },
+    "require": {
+        "ratepay/shopware6-module": ">=5.0.0-alpha4"
+    }
+}
