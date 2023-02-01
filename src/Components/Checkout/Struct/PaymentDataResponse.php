@@ -7,8 +7,9 @@ use Shopware\Core\System\SalesChannel\StoreApiResponse;
 
 class PaymentDataResponse extends StoreApiResponse
 {
-    public function __construct(ArrayStruct $paymentExtension)
+    public function __construct(ArrayStruct $paymentExtension, int $status = self::HTTP_OK)
     {
-        return parent::__construct($paymentExtension);
+        parent::__construct($paymentExtension);
+        $this->setStatusCode($status);
     }
 }

@@ -6,13 +6,16 @@ namespace Ratepay\RpayPaymentsHeadless\Components\Checkout\Controller;
 use Ratepay\RpayPayments\Components\Checkout\Service\ExtensionService;
 use Ratepay\RpayPayments\Components\CreditworthinessPreCheck\Service\PaymentQueryValidatorService;
 use Ratepay\RpayPayments\Components\ProfileConfig\Exception\ProfileNotFoundException;
+use Ratepay\RpayPayments\Components\ProfileConfig\Exception\ProfileNotFoundHttpException;
 use Ratepay\RpayPayments\Components\ProfileConfig\Service\Search\ProfileBySalesChannelContextAndCart;
 use Ratepay\RpayPayments\Components\RatepayApi\Service\TransactionIdService;
 use Ratepay\RpayPayments\Exception\RatepayException;
+use Ratepay\RpayPaymentsHeadless\Components\Checkout\Exception\PaymentQueryValidationException;
 use Ratepay\RpayPaymentsHeadless\Components\Checkout\Struct\PaymentDataResponse;
 use Ratepay\RpayPaymentsHeadless\Components\Checkout\Struct\PaymentQueryValidationResult;
 use Shopware\Core\Checkout\Cart\SalesChannel\CartService;
 use Shopware\Core\Framework\Plugin\Exception\DecorationPatternException;
+use Shopware\Core\Framework\Struct\ArrayStruct;
 use Shopware\Core\Framework\Validation\DataBag\DataBag;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Storefront\Page\Account\Order\AccountEditOrderPageLoader;
@@ -75,9 +78,11 @@ class CheckoutController extends AbstractCheckoutController
             $dataBag->get('ratepay')->set('profile_uuid', $profileConfig->getId());
             $this->paymentQueryValidatorService->validate($cart, $salesChannelContext, $transactionId, $dataBag);
 
-            return PaymentQueryValidationResult::createSuccess($transactionId);
+            return (new Response())->setStatusCode(Response::HTTP_NO_CONTENT);
+        } catch (ProfileNotFoundException $profileNotFoundException) {
+            throw new ProfileNotFoundHttpException();
         } catch (RatepayException $ratepayException) {
-            return PaymentQueryValidationResult::createSuccess($ratepayException->getMessage() . $salesChannelContext->getToken());
+            throw new PaymentQueryValidationException($ratepayException);
         }
     }
 
@@ -86,16 +91,20 @@ class CheckoutController extends AbstractCheckoutController
      */
     public function getPaymentData(Request $request, SalesChannelContext $salesChannelContext, string $orderId = null): Response
     {
-        if ($orderId) {
-            $subRequest = new Request();
-            $subRequest->request->set('orderId', $orderId);
-            $page = $this->orderLoader->load($subRequest, $salesChannelContext);
-            $extension = $page->getExtension('ratepay');
-        } else {
-            $extension = $this->extensionService->buildPaymentDataExtension($salesChannelContext, null, $request);
-        }
+        try {
+            if ($orderId) {
+                $subRequest = new Request();
+                $subRequest->request->set('orderId', $orderId);
+                $page = $this->orderLoader->load($subRequest, $salesChannelContext);
+                $extension = $page->getExtension('ratepay');
+            } else {
+                $extension = $this->extensionService->buildPaymentDataExtension($salesChannelContext, null, $request);
+            }
 
-        return new PaymentDataResponse($extension);
+            return new PaymentDataResponse($extension);
+        } catch (ProfileNotFoundException $profileNotFoundException) {
+            throw new ProfileNotFoundHttpException();
+        }
     }
 
     public function getDecorated(): AbstractCheckoutController
