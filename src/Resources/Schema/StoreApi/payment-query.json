@@ -1,0 +1,114 @@
+{
+    "openapi": "3.0.0",
+    "info": {},
+    "paths": {
+        "/ratepay/payment-query": {
+            "post": {
+                "tags": [
+                    "Ratepay"
+                ],
+                "summary": "pre-validates the cart-, order- and customer-data. the validation should be executed before placing the order.",
+                "operationId": "ratepayPaymentQuery",
+                "parameters": [
+                    {
+                        "name": "orderId",
+                        "in": "path",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{32}$"
+                        },
+                        "description": "Provide a order-id if you want to fetch the payment-data for an order."
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RatepayPaymentData"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "cart/order data has been successfully validated. You can continue placing the order."
+                    },
+                    "400": {
+                        "description": "There is an validation-error. See response."
+                    },
+                    "412": {
+                        "description": "there is no Ratepay profile available which can handle this payment. This will also occur if no Ratepay payment method is selected."
+                    }
+                },
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "RatepayPaymentData": {
+                "type": "object",
+                "description": "This object is used for payment-query and handle-payment. This object contains all required payment-data for Ratepay-payments",
+                "required": true,
+                "properties": {
+                    "transactionId": {
+                        "$ref": "#/components/schemas/RatepayTransactionId"
+                    },
+                    "preValidate": {
+                        "type": "boolean",
+                        "description": "If `true` the payment-module will validate all payment-data before submitting payment. Should by `true` for all Ratepay payment methods.",
+                        "required": true
+                    },
+                    "installment": {
+                        "type": "object",
+                        "required": true,
+                        "description": "Data for installment calculation. required, if payment method is installment.",
+                        "properties": {
+                            "type": {
+                                "$ref": "#/components/schemas/RatepayInstallmentCalculationType"
+                            },
+                            "value": {
+                                "$ref": "#/components/schemas/RatepayInstallmentCalculationValue"
+                            },
+                            "hash": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "deviceIdentToken": {
+                        "type": "string",
+                        "required": true,
+                        "description": "Device Ident Token (DFP) which is provided by /ratepay/payment-data. Please do not modify."
+                    },
+                    "bankData": {
+                        "type": "object",
+                        "required": true,
+                        "description": "required if the customer select debit as payment method (or als payment method for installments)",
+                        "properties": {
+                            "accountHolder": {
+                                "type": "string",
+                                "required": true,
+                                "description": "name of the customer or the company"
+                            },
+                            "iban": {
+                                "type": "string",
+                                "required": true,
+                                "description": "IBAN of the bank account"
+                            },
+                            "sepaConfirmation": {
+                                "type": "boolean",
+                                "required": true,
+                                "description": "needs to be `true`. The value is require to make sure the customer has confirmed the SEPA mandate."
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

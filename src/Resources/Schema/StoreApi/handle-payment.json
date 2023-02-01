@@ -1,0 +1,25 @@
+{
+    "openapi": "3.0.0",
+    "info": {},
+    "paths": {
+        "/handle-payment": {
+            "post": {
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "ratepayData": {
+                                        "description": "required for Ratepay payments",
+                                        "required": false,
+                                        "$ref": "#/components/schemas/RatepayPaymentData"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

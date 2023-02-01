@@ -1,0 +1,175 @@
+{
+    "openapi": "3.0.0",
+    "info": {},
+    "paths": {
+        "/ratepay/payment-data/{orderId}": {
+            "get": {
+                "tags": [
+                    "Ratepay"
+                ],
+                "summary": "fetches payment information required for Ratepay payments for cart or order. The Ratepay method has to be selected before.",
+                "operationId": "ratepayFetchPaymentData",
+                "parameters": [
+                    {
+                        "name": "orderId",
+                        "in": "path",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{32}$"
+                        },
+                        "description": "Provide a order-id if you want to fetch the payment-data for an order."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "returns payment-data object",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RatepayMethodData"
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "there is no Ratepay profile available which can handle this payment. This will also occur if no ratepay payment method is selected."
+                    }
+                },
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "RatepayMethodData": {
+                "type": "object",
+                "description": "This object contains some customer information, which you can use to prefill forms.",
+                "properties": {
+                    "installment": {
+                        "type": "object",
+                        "properties": {
+                            "calculator": {
+                                "type": "object",
+                                "properties": {
+                                    "defaults": {
+                                        "type": "object",
+                                        "properties": {
+                                            "type": {
+                                                "type": "string",
+                                                "description": "Default calculation type. `time` is used to specify the number of monthly-rates. With `rate`, the customer can specify how much he will pay monthly. ",
+                                                "enum": [
+                                                    "time",
+                                                    "rate"
+                                                ]
+                                            },
+                                            "value": {
+                                                "type": "integer",
+                                                "description": "Default value, for customer input."
+                                            }
+                                        },
+                                        "description": "Defines default settings for the calculation-type"
+                                    },
+                                    "rp_allowedMonths": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "List of months which is allowed with the actual cart/order-items"
+                                    },
+                                    "rp_minimumRate": {
+                                        "type": "number",
+                                        "description": "minimum amount of monthly rate"
+                                    },
+                                    "rp_maximumRate": {
+                                        "type": "number",
+                                        "description": "maximum amount of monthly rate"
+                                    }
+                                }
+                            },
+                            "translations": {
+                                "$ref": "#/components/schemas/RatepayInstallmentCalculatorTranslations"
+                            },
+                            "plan": {
+                                "$ref": "#/components/schemas/RatepayInstallmentPlan"
+                            },
+                            "transactionId": {
+                                "$ref": "#/components/schemas/RatepayTransactionId"
+                            }
+                        }
+                    },
+                    "accountHolders": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "provide these account holders for SEPA mandates. the customer is allowed to provide the customer-name or the company name. These property will hold these values."
+                    },
+                    "birthday": {
+                        "type": "object",
+                        "description": "The birthday of the customer.",
+                        "properties": {
+                            "year": {
+                                "type": "integer"
+                            },
+                            "month": {
+                                "type": "integer"
+                            },
+                            "day": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "phoneNumber": {
+                        "type": "string",
+                        "description": "The phone-number of the customer. Note: may be in different formats."
+                    },
+                    "company": {
+                        "type": "string",
+                        "description": "The company name if the user selected a B2B address"
+                    },
+                    "vatId": {
+                        "type": "string",
+                        "description": "The vat-id if the user selected a B2B address"
+                    },
+                    "isSandbox": {
+                        "type": "boolean",
+                        "description": "`true` if the Ratepay module if the current profile is in sandbox mode."
+                    },
+                    "paymentMethod": {
+                        "type": "string",
+                        "description": "Contains the current Ratepay payment method.",
+                        "enum": [
+                            "elv",
+                            "invoice",
+                            "prepayment",
+                            "installment"
+                        ]
+                    },
+                    "dfp": {
+                        "type": "object",
+                        "description": "This snippet has to loaded one-time. The token may change, e.g. when switching the payment method. When the token changes, you have re-implement the snippet again.<br>Please also see https://docs.ratepay.com/docs/developer/device_fingerprinting/device_fingerprinting/",
+                        "properties": {
+                            "deviceIdentToken": {
+                                "type": "string",
+                                "description": "unique token to identify the current user and session. Do not generate a new token by your self."
+                            },
+                            "html": {
+                                "type": "string",
+                                "description": "HTML Snippet which contains the script to implement."
+                            },
+                            "snippetId": {
+                                "type": "string",
+                                "description": "Snippet ID which the merchant got from Ratepay."
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
