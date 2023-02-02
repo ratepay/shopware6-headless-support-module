@@ -1,7 +1,7 @@
 {
     "name": "ratepay/shopware6-headless-support-module",
     "description": "Ratepay Headless Support Module",
-    "version": "0.0.1-alpha2",
+    "version": "0.0.1-alpha1",
     "license": "MIT",
     "authors": [
         {
@@ -36,7 +36,7 @@
         }
     },
     "require": {
-        "ratepay/shopware6-module": ">=5.0.0-alpha4",
+        "ratepay/shopware6-module": ">=5.0.0-alpha1",
         "shopware/core": "^6.4.11",
         "shopware/administration": "^6.4.11",
         "shopware/storefront": "^6.4.11"
