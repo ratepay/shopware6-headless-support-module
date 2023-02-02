@@ -56,16 +56,12 @@ class ValidatorService
             return;
         }
 
-
         $isPaymentDetailsWrapper = $dataBag->has('paymentDetails');
         $dataBag = $dataBag->get('paymentDetails', $dataBag);
         /** @var RequestDataBag $ratepayData */
         $ratepayData = $dataBag->get('ratepay');
 
-        if ($ratepayData &&
-            (!$preValidateCheck || $ratepayData->getBoolean('preValidate')) &&
-            $paymentMethodHandler instanceof AbstractPaymentHandler
-        ) {
+        if (!$preValidateCheck || $ratepayData->getBoolean('preValidate')) {
             $validationDefinitions = $paymentMethodHandler->getValidationDefinitions($dataBag, $object);
 
             $subDefinitions = new DataValidationDefinition();
