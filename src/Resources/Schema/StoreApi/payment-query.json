@@ -18,7 +18,7 @@
                             "type": "string",
                             "pattern": "^[0-9a-f]{32}$"
                         },
-                        "description": "Provide a order-id if you want to fetch the payment-data for an order."
+                        "description": "Provide a order-id if you want to do the payment query for an existing order instead the actual cart."
                     }
                 ],
                 "requestBody": {

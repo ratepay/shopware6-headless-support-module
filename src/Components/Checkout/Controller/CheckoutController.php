@@ -3,6 +3,7 @@
 
 namespace Ratepay\RpayPaymentsHeadless\Components\Checkout\Controller;
 
+use Ratepay\RpayPayments\Components\ProfileConfig\Dto\ProfileConfigSearch;
 use Ratepay\RpayPayments\Components\Checkout\Service\ExtensionService;
 use Ratepay\RpayPayments\Components\CreditworthinessPreCheck\Service\PaymentQueryValidatorService;
 use Ratepay\RpayPayments\Components\ProfileConfig\Exception\ProfileNotFoundException;
@@ -10,12 +11,17 @@ use Ratepay\RpayPayments\Components\ProfileConfig\Exception\ProfileNotFoundHttpE
 use Ratepay\RpayPayments\Components\ProfileConfig\Service\Search\ProfileBySalesChannelContextAndCart;
 use Ratepay\RpayPayments\Components\RatepayApi\Service\TransactionIdService;
 use Ratepay\RpayPayments\Exception\RatepayException;
+use Ratepay\RpayPayments\Util\CriteriaHelper;
 use Ratepay\RpayPaymentsHeadless\Components\Checkout\Exception\PaymentQueryValidationException;
 use Ratepay\RpayPaymentsHeadless\Components\Checkout\Struct\PaymentDataResponse;
-use Ratepay\RpayPaymentsHeadless\Components\Checkout\Struct\PaymentQueryValidationResult;
+use Shopware\Core\Checkout\Cart\Order\OrderConverter;
 use Shopware\Core\Checkout\Cart\SalesChannel\CartService;
+use Shopware\Core\Checkout\Order\OrderDefinition;
+use Shopware\Core\Checkout\Order\OrderEntity;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
+use Shopware\Core\Framework\DataAbstractionLayer\Exception\EntityNotFoundException;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\Plugin\Exception\DecorationPatternException;
-use Shopware\Core\Framework\Struct\ArrayStruct;
 use Shopware\Core\Framework\Validation\DataBag\DataBag;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Storefront\Page\Account\Order\AccountEditOrderPageLoader;
@@ -41,13 +47,19 @@ class CheckoutController extends AbstractCheckoutController
 
     private AccountEditOrderPageLoader $orderLoader;
 
+    private OrderConverter $orderConverter;
+
+    private EntityRepository $orderRepository;
+
     public function __construct(
         PaymentQueryValidatorService $paymentQueryValidatorService,
         CartService $cartService,
         TransactionIdService $transactionIdService,
         ProfileBySalesChannelContextAndCart $profileConfigSearch,
         ExtensionService $extensionService,
-        AccountEditOrderPageLoader $orderLoader
+        AccountEditOrderPageLoader $orderLoader,
+        OrderConverter $orderConverter,
+        EntityRepository $orderRepository
     )
     {
         $this->paymentQueryValidatorService = $paymentQueryValidatorService;
@@ -56,16 +68,28 @@ class CheckoutController extends AbstractCheckoutController
         $this->profileConfigSearch = $profileConfigSearch;
         $this->extensionService = $extensionService;
         $this->orderLoader = $orderLoader;
+        $this->orderConverter = $orderConverter;
+        $this->orderRepository = $orderRepository;
     }
 
     /**
-     * @Route("/store-api/ratepay/payment-query", name="store-api.ratepay.checkout.pq", methods={"POST"}, defaults={"_loginRequired"=true, "_loginRequiredAllowGuest"=true})
+     * @Route("/store-api/ratepay/payment-query/{orderId}", name="store-api.ratepay.checkout.pq", methods={"POST"}, defaults={"_loginRequired"=true, "_loginRequiredAllowGuest"=true})
      */
-    public function executePQ(Request $request, SalesChannelContext $salesChannelContext): Response
+    public function executePQ(Request $request, SalesChannelContext $salesChannelContext, ?string $orderId = null): Response
     {
-        $cart = $this->cartService->getCart($salesChannelContext->getToken(), $salesChannelContext);
+        if ($orderId !== null) {
+            $order = $this->orderRepository->search(CriteriaHelper::getCriteriaForOrder($orderId), $salesChannelContext->getContext())->first();
+            if (!$order instanceof OrderEntity) {
+                throw new EntityNotFoundException(OrderDefinition::ENTITY_NAME, $orderId);
+            }
+
+            $cart = $this->orderConverter->convertToCart($order, $salesChannelContext->getContext());
+        } else {
+            $cart = $this->cartService->getCart($salesChannelContext->getToken(), $salesChannelContext);
+        }
+
         $profileConfigSearchObject = $this->profileConfigSearch->createSearchObject($salesChannelContext, $cart);
-        $profileConfig = $profileConfigSearchObject !== null ? $this->profileConfigSearch->search($profileConfigSearchObject)->first() : null;
+        $profileConfig = $profileConfigSearchObject instanceof ProfileConfigSearch ? $this->profileConfigSearch->search($profileConfigSearchObject)->first() : null;
 
         try {
             if ($profileConfig === null) {
