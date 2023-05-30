@@ -2,6 +2,7 @@
 
 namespace Ratepay\RpayPaymentsHeadless\Components\Checkout\Payment\SalesChannel;
 
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Ratepay\RpayPayments\Components\Checkout\Model\Extension\OrderExtension;
 use Ratepay\RpayPayments\Components\Checkout\Model\RatepayOrderDataEntity;
 use Ratepay\RpayPayments\Components\PaymentHandler\AbstractPaymentHandler;
@@ -64,7 +65,7 @@ class HandlePaymentMethodRoute extends AbstractHandlePaymentMethodRoute
 
         $response = $this->innerService->load($request, $context);
 
-        if ($isRatepayMethod && $response->getRedirectResponse() === null) {
+        if ($isRatepayMethod && !$response->getRedirectResponse() instanceof RedirectResponse) {
             // seems like, there is no error occurred. - this check does not make so much sense, but this is the only way to validate it
             $orderId = $request->get('orderId');
 
