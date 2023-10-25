@@ -44,6 +44,12 @@ class HandlePaymentMethodRoute extends AbstractHandlePaymentMethodRoute
 
     public function load(Request $request, SalesChannelContext $context): HandlePaymentMethodRouteResponse
     {
+        if ($request->headers->count() === 0) {
+            // it seems like that this is not an API request. This should be an internal call of the route.
+            // the module should only handle API calls.
+            return $this->innerService->load($request, $context);
+        }
+
         $paymentHandlerIdentifier = null;
         if ($request->request->getBoolean('updatePayment')) {
             $orderId = $request->request->get('orderId');
